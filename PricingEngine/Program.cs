@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using PricingEngine.Db;
+using PricingEngine.Repositories;
+using PricingEngine.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +14,9 @@ builder.Services.AddDbContext<PricingEngineDbContext>(options =>
 {
     options.UseSqlServer(@"Server=(localdb)\MSSQLLocalDB;Database=PricingEngine");
 });
+
+builder.Services.AddTransient<IUserInputRepository, UserInputRepository>();
+builder.Services.AddTransient<ICalculateUserInput, CalculateUserInput>();
 
 var app = builder.Build();
 

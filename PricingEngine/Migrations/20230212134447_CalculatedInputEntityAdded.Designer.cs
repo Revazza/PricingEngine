@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PricingEngine.Db;
 
@@ -11,9 +12,11 @@ using PricingEngine.Db;
 namespace PricingEngine.Migrations
 {
     [DbContext(typeof(PricingEngineDbContext))]
-    partial class PricingEngineDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230212134447_CalculatedInputEntityAdded")]
+    partial class CalculatedInputEntityAdded
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,29 +24,6 @@ namespace PricingEngine.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("PricingEngine.Db.Entities.CalculatedInputEntity", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<double>("CapitalAllocationRate")
-                        .HasColumnType("float");
-
-                    b.Property<double>("InterestRate")
-                        .HasColumnType("float");
-
-                    b.Property<double>("TransactionCostRate")
-                        .HasColumnType("float");
-
-                    b.Property<double>("UsedPayment")
-                        .HasColumnType("float");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("CalculatedUserInputs");
-                });
 
             modelBuilder.Entity("PricingEngine.Db.Entities.DbInputEntity", b =>
                 {
@@ -70,7 +50,7 @@ namespace PricingEngine.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("3ab7668e-9dce-4aa8-a7be-41776e327a4d"),
+                            Id = new Guid("0c8bc887-4533-408d-8ce7-a1ad2de5b0a1"),
                             CapitalRiskRateWeight = 0.014999999999999999,
                             CreditRiskAllocation = 0,
                             MaintenanceRate = 0.02,
@@ -130,7 +110,7 @@ namespace PricingEngine.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("24d334ba-6b6a-4933-88cf-95392872438d"),
+                            Id = new Guid("4b336103-f7f4-4a50-9dd2-8b29915ab375"),
                             AvgMonthlyFeeIncome = 5.0,
                             Balance = 1000.0,
                             CommitmentAmount = 50.0,
