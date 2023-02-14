@@ -1,6 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using PricingEngine.Repositories;
+﻿using Microsoft.AspNetCore.Mvc;
+using PricingEngine.Models.Requests;
 using PricingEngine.Services;
 
 namespace PricingEngine.Controllers
@@ -9,32 +8,22 @@ namespace PricingEngine.Controllers
     [ApiController]
     public class UserInputController : ControllerBase
     {
-        private readonly IUserInputRepository _repository;
-        private readonly ICalculateUserInput _service;
+        private readonly ICalculationService _service;
 
         public UserInputController(
-            IUserInputRepository repository,
-            ICalculateUserInput service)
+            ICalculationService service)
         {
-            _repository = repository;
             _service = service;
         }
 
 
-        [HttpPost("add-user-input")]
-        public async Task<IActionResult> AddUserInput()
-        {
-
-            return Ok();
-        }
-
         [HttpPost("calculate-input")]
         public async Task<IActionResult> CalculateInput()
         {
+            //for demo puproses I'll just use property-defined UserInputEntity
+            var userInput = new CalculateLoanRequest();
 
-            await _service.CalculateInputsAsync();
-
-            await _service.SaveChangesAsync();
+            _service.PerformCalculations(userInput);
 
             return Ok();
         }

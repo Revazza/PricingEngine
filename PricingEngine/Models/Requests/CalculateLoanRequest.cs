@@ -22,21 +22,21 @@
         None
     }
 
-    public class AddUserInputRequest
+    public class CalculateLoanRequest
     {
         public decimal Balance { get; set; }
         public InterestType InterestType { get; set; }
         public ProductType ProductType { get; set; }
         public PaymentType PaymentType { get; set; }
         public int OriginalTermInMonths { get; set; }
-        public double CommitmentAmount { get; set; }
-        public double MonthlyFeeIncome { get; set; }
-        public double InterestSpread { get; set; }
+        public decimal CommitmentAmount { get; set; }
+        public decimal MonthlyFeeIncome { get; set; }
+        public decimal InterestSpread { get; set; }
         public int TeaserPeriod { get; set; }
-        public double InterestRate { get; set; }
-        public double TeaserSpread { get; set; }
-        public double AvgMonthlyFeeIncome { get; set; }
-        public double DiscountFromStandardFee { get; set; }
+        public decimal InterestRate { get; set; }
+        public decimal TeaserSpread { get; set; }
+        public decimal AvgMonthlyFeeIncome { get; set; }
+        public decimal DiscountFromStandardFee { get; set; }
 
 
     }
