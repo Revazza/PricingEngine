@@ -18,14 +18,14 @@ namespace PricingEngine.Controllers
 
 
         [HttpPost("calculate-input")]
-        public async Task<IActionResult> CalculateInput()
+        public IActionResult CalculateInput()
         {
             //for demo puproses I'll just use property-defined UserInputEntity
             var userInput = new CalculateLoanRequest();
 
-            _service.PerformCalculations(userInput);
+            var loans = _service.PerformCalculations(userInput);
 
-            return Ok();
+            return Ok(loans);
         }
 
 
