@@ -24,7 +24,7 @@
 
     public class CalculateLoanRequest
     {
-        public decimal Balance { get; set; } = 1000m;
+        public decimal Balance { get; set; } = 1000.00m;
         public InterestType InterestType { get; set; } = InterestType.Variable;
         public ProductType ProductType { get; set; } = ProductType.Loan;
         public PaymentType PaymentType { get; set; } = PaymentType.PrincipalOnly;
@@ -35,7 +35,7 @@
         public int TeaserPeriod { get; set; } = 3;
         public decimal InterestRate { get; set; } = 0.08m;
         public decimal TeaserSpread { get; set; } = 0.04m;
-        public decimal AvgMonthlyFeeIncome { get; set; } = 5;
+        public decimal AvgMonthlyFeeIncome { get; set; } = 5.00m;
         public decimal DiscountFromStandardFee { get; set; } = 0.03m;
 
 
