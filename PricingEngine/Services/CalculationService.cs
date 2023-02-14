@@ -2,6 +2,7 @@
 using PricingEngine.Models.Dto;
 using PricingEngine.Models;
 using PricingEngine.Controllers;
+using PricingEngine.Models.Calculators;
 
 namespace PricingEngine.Services
 {
@@ -9,10 +10,7 @@ namespace PricingEngine.Services
     public interface ICalculationService
     {
         List<Loan> PerformCalculations(CalculateLoanRequest input);
-
-
     }
-
 
     public class CalculationService : ICalculationService
     {
@@ -27,6 +25,45 @@ namespace PricingEngine.Services
         {
             var calculatedInputs = CalculateInputs(input);
 
+            var loans = CalculateLoans(input, calculatedInputs);
+
+            return loans;
+        }
+
+        private decimal CalculateTotalContractualCashFlow(
+           decimal contractualPrincipal,
+           decimal ballonPaymentAtMaturity)
+        {
+            return contractualPrincipal + ballonPaymentAtMaturity;
+        }
+
+        private decimal CalculateAnnualizedInterestOnCashFlow(
+            CalculatedInputs calcInputs,
+            Loan loan)
+        {
+            return loan.TotalPrincipalPaid * calcInputs.InterestRate;
+        }
+
+        private CalculatedInputs CalculateInputs(CalculateLoanRequest input)
+        {
+            var terms = new Terms()
+            {
+                MaintenanceRate = MAINTENANCE_RATE,
+                PrepaymentRate = PREPAYMENT_RATE,
+                CreditRiskAllocation = CREDIT_RISK_ALLOCATION,
+                CapitalRiskRateWeight = CAPITAL_RISK_RATE_WEIGHT
+            };
+
+            var calculatedInputs = new InputsCalculator(terms)
+                .Calculate(input);
+
+            return calculatedInputs;
+        }
+
+        private List<Loan> CalculateLoans(
+            CalculateLoanRequest input,
+            CalculatedInputs calculatedInputs)
+        {
             var balance = input.Balance;
 
             var loans = new List<Loan>();
@@ -35,13 +72,28 @@ namespace PricingEngine.Services
             {
                 var loan = new Loan();
                 loan.BeginningBalance = balance;
-                loan.PaymentAmount = CalculatePaymentAmount(input, calculatedInputs, month: i);
-                loan.ContractualInterest = CalculateContractualInterest(input, calculatedInputs, loan.PaymentAmount);
-                loan.ContractualPrincipal = CalculateContractualPrincipal(loan);
-                loan.BalloonPaymentAtMaturity = CalculateBallonPaymentAtMaturity(input, loan.BeginningBalance, month: i);
-                loan.TotalContractualCashflow = CalculateTotalContractualCashFlow(loan.ContractualPrincipal, loan.BalloonPaymentAtMaturity);
-                loan.PrepaymentCashflow = CalculatePrePaymentCashFlow(loan);
-                loan.TotalPrincipalPaid = CalculateTotalPrinciplePaid(calculatedInputs, loan);
+                loan.PaymentAmount = new PaymentAmountCalculator()
+                    .Calculate(input, calculatedInputs, MAINTENANCE_RATE, month: i);
+
+                loan.ContractualInterest = new ContractualInterestCalculator()
+                    .Calculate(input, calculatedInputs, loan.PaymentAmount);
+
+                loan.ContractualPrincipal = new ContractualPrincipalCalculator()
+                    .Calculate(loan);
+
+                loan.BalloonPaymentAtMaturity = new BallonPaymentAtMaturityCalculator()
+                    .Calculate(input, loan.BeginningBalance, month: i);
+
+                loan.TotalContractualCashflow = CalculateTotalContractualCashFlow(
+                    loan.ContractualPrincipal,
+                    loan.BalloonPaymentAtMaturity);
+
+                loan.PrepaymentCashflow = new PrePaymentCashFlowCalculator()
+                    .Calculate(loan, PREPAYMENT_RATE);
+
+                loan.TotalPrincipalPaid = new TotalPrinciplePaidCalculator()
+                    .Calculate(calculatedInputs, loan);
+
                 loan.AnnualizedInterestOnCashFlow = CalculateAnnualizedInterestOnCashFlow(calculatedInputs, loan);
                 loan.EndingBalance = loan.BeginningBalance + loan.TotalPrincipalPaid;
 
@@ -54,156 +106,7 @@ namespace PricingEngine.Services
             return loans;
         }
 
-        private decimal CalculateAnnualizedInterestOnCashFlow(
-            CalculatedInputs calcInputs,
-            Loan loan)
-        {
 
-            return loan.TotalPrincipalPaid * calcInputs.InterestRate;
-        }
-
-        private decimal CalculateTotalPrinciplePaid(
-            CalculatedInputs calcInputs,
-            Loan loan)
-        {
-            return
-                loan.TotalContractualCashflow +
-                loan.PrepaymentCashflow +
-                (loan.PrepaymentCashflow * calcInputs.CapitalAllocationRate);
-        }
-
-        private decimal CalculatePrePaymentCashFlow(Loan loan)
-        {
-            if (-loan.TotalContractualCashflow >= loan.BeginningBalance)
-            {
-                return 0;
-            }
-
-            return Math.Max(
-                -(loan.BeginningBalance + loan.TotalContractualCashflow),
-                -PREPAYMENT_RATE * loan.BeginningBalance
-                );
-        }
-
-        private decimal CalculateTotalContractualCashFlow(
-            decimal contractualPrincipal,
-            decimal ballonPaymentAtMaturity)
-        {
-            return contractualPrincipal + ballonPaymentAtMaturity;
-        }
-
-        private decimal CalculateBallonPaymentAtMaturity(
-            CalculateLoanRequest input,
-            decimal beeginingBalance,
-            int month)
-        {
-            return month >= input.OriginalTermInMonths ? -beeginingBalance : 0;
-        }
-
-        private decimal CalculateContractualPrincipal(Loan loan)
-        {
-            if (-(loan.PaymentAmount - loan.ContractualInterest) > loan.BeginningBalance)
-            {
-                return -loan.BeginningBalance;
-            }
-
-            return Math.Min(0, loan.PaymentAmount - loan.ContractualInterest);
-        }
-
-        private decimal CalculateContractualInterest(
-            CalculateLoanRequest input,
-            CalculatedInputs calcInputs,
-            decimal paymentAmount)
-        {
-
-            //=IF(OR(B$5="Interest only",B$5="Principal interest"),(K3*B$9)+(K3*B$9*H$2),B$7+B$8+(K3*B$9))
-            if (input.PaymentType == PaymentType.InterestOnly ||
-                input.PaymentType == PaymentType.PrincipalInterest)
-            {
-                var a = (paymentAmount * input.InterestSpread) +
-                    (paymentAmount * input.InterestSpread * calcInputs.InterestRate);
-                return (paymentAmount * input.InterestSpread) +
-                    (paymentAmount * input.InterestSpread * calcInputs.InterestRate);
-            }
-
-            return input.CommitmentAmount + input.MonthlyFeeIncome + (paymentAmount * input.InterestSpread);
-
-        }
-
-        private decimal CalculatePaymentAmount(
-            CalculateLoanRequest input,
-            CalculatedInputs calcInputs,
-            int month)
-        {
-            var result = calcInputs.UsedPayment * month + calcInputs.UsedPayment * MAINTENANCE_RATE;
-            if (input.InterestType == InterestType.Variable)
-            {
-                result += input.CommitmentAmount + input.MonthlyFeeIncome;
-            }
-            return result;
-        }
-
-        private CalculatedInputs CalculateInputs(CalculateLoanRequest input)
-        {
-            var calculatedInputs = new CalculatedInputs();
-
-            calculatedInputs.InterestRate = CalculateInterestRate(input);
-            calculatedInputs.TransactionCostRate = CalculateTransactionCostRate(input);
-            calculatedInputs.CapitalAllocationRate = CalculateAllocationRate();
-            calculatedInputs.UsedPayment = CalculateUsedPayment(input, calculatedInputs.TransactionCostRate);
-
-            return calculatedInputs;
-        }
-
-        private decimal CalculateInterestRate(CalculateLoanRequest input)
-        {
-            if (
-                (input.ProductType == ProductType.Loan
-                    || input.ProductType == ProductType.CD)
-                && input.InterestType == InterestType.Fixed)
-            {
-                return input.InterestRate;
-            }
-
-            if (input.TeaserPeriod == 0)
-            {
-                return input.TeaserSpread;
-            }
-
-
-            return input.InterestSpread + input.TeaserSpread;
-        }
-
-        private decimal CalculateTransactionCostRate(CalculateLoanRequest input)
-        {
-            return input.AvgMonthlyFeeIncome / (1 - input.DiscountFromStandardFee);
-        }
-
-        private decimal CalculateAllocationRate()
-        {
-            return CREDIT_RISK_ALLOCATION == CreditRisk.Capital ?
-                CAPITAL_RISK_RATE_WEIGHT + MAINTENANCE_RATE :
-                MAINTENANCE_RATE;
-        }
-
-
-        private decimal CalculateUsedPayment(
-            CalculateLoanRequest input,
-            decimal transactionCostRate)
-        {
-            decimal result;
-            if (input.InterestType == InterestType.Fixed)
-            {
-                result = input.Balance * input.InterestSpread;
-            }
-            else
-            {
-                result = input.Balance * input.TeaserSpread;
-            }
-
-            result += transactionCostRate;
-            return result;
-        }
 
     }
 }
