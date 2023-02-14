@@ -44,7 +44,7 @@ namespace PricingEngine.Services
 
             var loans = new List<Loan>();
 
-            for (int i = 1; i < 13; i++)
+            for (int i = 2; i <= 13; i++)
             {
                 var loan = new Loan();
                 loan.BeginningBalance = balance;
