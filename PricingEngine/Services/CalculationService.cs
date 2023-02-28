@@ -60,12 +60,41 @@ namespace PricingEngine.Services
             return calculatedInputs;
         }
 
-        public void CalculateLoan(
+        public Loan CalculateLoan(
             CalculationsDto calculations,
             CalculatorsStorage calculators)
         {
+            var loan = calculations.Loan!;
 
+            loan.PaymentAmount = calculators.PaymentAmountCalculator!
+                .Calculate(calculations);
+
+            loan.ContractualInterest = calculators.ContractualInterestCalculator!
+                .Calculate(calculations);
+
+            loan.ContractualPrincipal = calculators.ContractualPrincipalCalculator!
+                .Calculate(calculations);
+
+            loan.BalloonPaymentAtMaturity = calculators.BallonPaymentAtMaturityCalculator!
+                .Calculate(calculations);
+
+            loan.TotalContractualCashflow = CalculateTotalContractualCashFlow(
+                loan.ContractualPrincipal,
+                loan.BalloonPaymentAtMaturity);
+
+            loan.PrepaymentCashflow = calculators.PrePaymentCashFlowCalculator!
+                .Calculate(calculations);
+
+            loan.TotalPrincipalPaid = calculators.TotalPrinciplePaidCalculator!
+                .Calculate(calculations);
+
+            loan
+                .AnnualizedInterestOnCashFlow = 
+                    CalculateAnnualizedInterestOnCashFlow(calculations.CalculatedInputs!, loan);
+            loan.EndingBalance = loan.BeginningBalance + loan.TotalPrincipalPaid;
+            return loan;
         }
+
 
         private List<Loan> CalculateLoans(
             CalculateLoanRequest input,
@@ -94,36 +123,11 @@ namespace PricingEngine.Services
                     loans.Add(calculations.Loan);
                     continue;
                 }
+
                 calculations.Month = i;
+                calculations.Loan.BeginningBalance = balance;
 
-                var loan = calculations.Loan!;
-
-                loan.BeginningBalance = balance;
-                loan.PaymentAmount = calculators.PaymentAmountCalculator!
-                    .Calculate(calculations);
-
-                loan.ContractualInterest = calculators.ContractualInterestCalculator!
-                    .Calculate(calculations);
-
-                loan.ContractualPrincipal = calculators.ContractualPrincipalCalculator!
-                    .Calculate(calculations);
-
-                loan.BalloonPaymentAtMaturity = calculators.BallonPaymentAtMaturityCalculator!
-                    .Calculate(calculations);
-
-                loan.TotalContractualCashflow = CalculateTotalContractualCashFlow(
-                    loan.ContractualPrincipal,
-                    loan.BalloonPaymentAtMaturity);
-
-                loan.PrepaymentCashflow = calculators.PrePaymentCashFlowCalculator!
-                    .Calculate(calculations);
-
-                loan.TotalPrincipalPaid = calculators.TotalPrinciplePaidCalculator!
-                    .Calculate(calculations);
-
-                loan
-                    .AnnualizedInterestOnCashFlow = CalculateAnnualizedInterestOnCashFlow(calculatedInputs, loan);
-                loan.EndingBalance = loan.BeginningBalance + loan.TotalPrincipalPaid;
+                var loan = CalculateLoan(calculations, calculators);
 
                 balance = loan.EndingBalance;
 
