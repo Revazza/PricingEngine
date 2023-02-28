@@ -27,7 +27,7 @@
         public decimal Balance { get; set; } = 1000.00m;
         public InterestType InterestType { get; set; } = InterestType.Variable;
         public ProductType ProductType { get; set; } = ProductType.Loan;
-        public PaymentType PaymentType { get; set; } = PaymentType.PrincipalOnly;
+        public PaymentType PaymentType { get; set; } = PaymentType.InterestOnly;
         public int OriginalTermInMonths { get; set; } = 9;
         public decimal CommitmentAmount { get; set; } = 50.00m;
         public decimal MonthlyFeeIncome { get; set; } = 2.00m;

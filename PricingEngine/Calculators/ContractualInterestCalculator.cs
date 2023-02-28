@@ -12,11 +12,12 @@ namespace PricingEngine.Calculators
             if (c.Input!.PaymentType == PaymentType.InterestOnly ||
                 c.Input.PaymentType == PaymentType.PrincipalInterest)
             {
-                return c.Loan!.PaymentAmount * c.Input.InterestSpread +
-                    c.Loan!.PaymentAmount * c.Input.InterestSpread * c.CalculatedInputs!.InterestRate;
+                return (c.Loan!.PaymentAmount * c.Input.InterestSpread) +
+                    (c.Loan!.PaymentAmount * c.Input.InterestSpread * c.CalculatedInputs!.InterestRate);
             }
 
-            return c.Input!.CommitmentAmount + c.Input!.MonthlyFeeIncome + c.Loan!.PaymentAmount * c.Input!.InterestSpread;
+            return c.Input!.CommitmentAmount + c.Input!.MonthlyFeeIncome
+                + (c.Loan!.PaymentAmount * c.Input!.InterestSpread);
 
         }
 

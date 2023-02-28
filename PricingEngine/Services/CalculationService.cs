@@ -60,7 +60,12 @@ namespace PricingEngine.Services
             return calculatedInputs;
         }
 
+        public void CalculateLoan(
+            CalculationsDto calculations,
+            CalculatorsStorage calculators)
+        {
 
+        }
 
         private List<Loan> CalculateLoans(
             CalculateLoanRequest input,
@@ -89,10 +94,9 @@ namespace PricingEngine.Services
                     loans.Add(calculations.Loan);
                     continue;
                 }
-                calculations.Month = ++i;
+                calculations.Month = i;
 
                 var loan = calculations.Loan!;
-                loan.BeginningBalance = balance;
 
                 loan.BeginningBalance = balance;
                 loan.PaymentAmount = calculators.PaymentAmountCalculator!
