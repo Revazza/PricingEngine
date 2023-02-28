@@ -1,6 +1,7 @@
-﻿using PricingEngine.Models.Requests;
+﻿using PricingEngine.Models;
+using PricingEngine.Models.Requests;
 
-namespace PricingEngine.Models.Calculators
+namespace PricingEngine.Calculators
 {
     public class InputsCalculator
     {

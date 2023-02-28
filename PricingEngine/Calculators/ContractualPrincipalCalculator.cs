@@ -1,13 +1,14 @@
 ﻿using PricingEngine.Models.Dto;
 
-namespace PricingEngine.Models.Calculators
+namespace PricingEngine.Calculators
 {
     public class ContractualPrincipalCalculator
     {
 
-        public decimal Calculate(Loan loan)
+        public decimal Calculate(CalculationsDto c)
         {
-            if (-(loan.PaymentAmount - loan.ContractualInterest) > loan.BeginningBalance)
+            var loan = c.Loan;
+            if (-(loan!.PaymentAmount - loan.ContractualInterest) > loan.BeginningBalance)
             {
                 return -loan.BeginningBalance;
             }
